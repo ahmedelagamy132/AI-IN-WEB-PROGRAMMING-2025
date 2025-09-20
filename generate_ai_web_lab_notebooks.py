@@ -51,7 +51,7 @@ lab1_cells = [
     md(
         """## Objectives
 - A FastAPI backend is scaffolded with health and echo routes.
-- A Create React App frontend is outlined without using Vite.
+- A Vite React frontend is outlined with modern tooling defaults.
 - A Git repository is initialized with environment templates.
 """
     ),
@@ -59,7 +59,7 @@ lab1_cells = [
         """## What will be learned
 - The structure of a basic FastAPI service is reviewed.
 - Development-time CORS settings are configured.
-- Create React App scaffolding steps are rehearsed.
+- Vite-powered React scaffolding steps are rehearsed.
 - Git initialization practices are reinforced.
 """
     ),
@@ -79,11 +79,11 @@ python -m venv .venv
 # Windows: .venv\\Scripts\\activate
 # Unix/macOS:
 . .venv/bin/activate
-pip install fastapi uvicorn[standard] pydantic python-dotenv google-generativeai faiss-cpu numpy
+pip install fastapi uvicorn[standard] pydantic python-dotenv google-genai faiss-cpu numpy
 
-# Frontend creation (Create React App; no Vite)
+# Frontend creation (Vite React template)
 cd ../../
-npx create-react-app frontend
+npm create vite@latest frontend -- --template react
 cd frontend
 npm install
 ```
@@ -108,7 +108,7 @@ base = Path("ai-web/backend")
 uvicorn[standard]
 pydantic
 python-dotenv
-google-generativeai
+google-genai
 faiss-cpu
 numpy
 ''')
@@ -119,7 +119,7 @@ from pydantic import BaseModel
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -143,7 +143,7 @@ print("Backend scaffold was written under ai-web/backend.")
     ),
     md(
         """### Step 2: Frontend placeholders
-Frontend placeholders are positioned so Create React App components can be customized.
+Frontend placeholders are positioned so Vite React components (`src/App.jsx`, `src/main.jsx`) can be customized while the generated `vite.config.js` continues to manage dev server defaults.
 """
     ),
     code(
@@ -151,7 +151,8 @@ Frontend placeholders are positioned so Create React App components can be custo
 from pathlib import Path
 src = Path("ai-web/frontend/src")
 (src / "lib").mkdir(parents=True, exist_ok=True)
-(src / "lib" / "api.js").write_text('''const BASE = process.env.REACT_APP_API_BASE || "http://localhost:8000";
+
+(src / "lib" / "api.js").write_text('''const BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 export async function post(path, body) {
   const res = await fetch(`${BASE}${path}`, {
@@ -165,7 +166,7 @@ export async function post(path, body) {
   return res.json();
 }
 ''')
-(src / "App.js").write_text('''import React, { useState } from 'react';
+(src / "App.jsx").write_text('''import { useState } from 'react';
 import { post } from './lib/api';
 
 function App() {
@@ -201,6 +202,16 @@ function App() {
 
 export default App;
 ''')
+(src / "main.jsx").write_text('''import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
+''')
 print("Frontend placeholders were written under ai-web/frontend/src.")
 """
     ),
@@ -229,7 +240,7 @@ git commit -m "Lab 1 scaffold"
     ]),
 ]
 
-labs.append(("Lab01_FastAPI_CRA_and_Git", "Lab 01 · FastAPI, CRA, and Git", lab1_cells))
+labs.append(("Lab01_FastAPI_Vite_and_Git", "Lab 01 · FastAPI, Vite, and Git", lab1_cells))
 
 # ---------------------------------------------------------------------------
 # Lab 02
@@ -287,13 +298,13 @@ print("Retry helper was written.")
     ),
     md(
         """### Step 2: Form integration
-App.js is updated so the retry helper wraps the echo request and error states remain friendly.
+App.jsx is updated so the retry helper wraps the echo request and error states remain friendly.
 """
     ),
     code(
         """
 from pathlib import Path
-app_js = Path("ai-web/frontend/src/App.js")
+app_js = Path("ai-web/frontend/src/App.jsx")
 text = app_js.read_text()
 if "withRetry" not in text:
     text = text.replace(
@@ -311,7 +322,7 @@ if "setError(String(err));" in text:
         "setError('A temporary issue was encountered. Please try again.');",
     )
 app_js.write_text(text)
-print("App.js was adjusted for retry and friendly errors.")
+print("App.jsx was adjusted for retry and friendly errors.")
 """
     ),
     acceptance(
@@ -350,7 +361,7 @@ The following commands are intended for local execution.
 ```bash
 cd ai-web/backend
 . .venv/bin/activate
-pip install google-generativeai
+pip install google-genai
 ```
 """
     ),
@@ -366,18 +377,20 @@ from pathlib import Path
 module = Path("ai-web/backend/app/llm.py")
 module.parent.mkdir(parents=True, exist_ok=True)
 module.write_text('''import os
-from typing import List, Dict
+from typing import Dict, List, Any
 
-import google.generativeai as genai
+from google import genai
 
 
-def chat(messages: List[Dict[str, str]]) -> str:
+def chat(messages: List[Dict[str, Any]]) -> str:
   api_key = os.environ.get('GEMINI_API_KEY', '')
   if not api_key:
     raise RuntimeError('A backend API key is required.')
-  genai.configure(api_key=api_key)
-  model = genai.GenerativeModel('gemini-1.5-flash')
-  response = model.generate_content(messages)
+  client = genai.Client(api_key=api_key)
+  response = client.models.generate_content(
+      model="gemini-1.5-flash",
+      contents=messages,
+  )
   return response.text
 ''')
 print("Gemini helper was written.")
@@ -425,13 +438,13 @@ else:
     ),
     md(
         """### Step 3: React chat surface
-A lightweight chat component is appended to App.js so the proxy is exercised.
+A lightweight chat component is appended to App.jsx so the proxy is exercised.
 """
     ),
     code(
         """
 from pathlib import Path
-app_js = Path("ai-web/frontend/src/App.js")
+app_js = Path("ai-web/frontend/src/App.jsx")
 app_js.write_text('''import React, { useState } from 'react';
 import { post } from './lib/api';
 import { withRetry } from './lib/retry';
@@ -786,7 +799,7 @@ The following commands are intended for local execution.
 ```bash
 cd ai-web/backend
 . .venv/bin/activate
-pip install faiss-cpu google-generativeai numpy
+pip install faiss-cpu google-genai numpy
 ```
 """
         ),
@@ -805,7 +818,7 @@ import os
 from pathlib import Path
 from typing import List, Tuple
 
-import google.generativeai as genai
+from google import genai
 import numpy as np
 import faiss
 
@@ -816,18 +829,31 @@ INDEX_FILE = DATA_DIR / "embeddings.index"
 META_FILE = DATA_DIR / "metadata.json"
 
 
+def _client() -> genai.Client:
+  api_key = os.environ.get('GEMINI_API_KEY', '')
+  if not api_key:
+    raise RuntimeError('A backend API key is required for embeddings.')
+  return genai.Client(api_key=api_key)
+
+
+def _text_content(text: str) -> dict:
+  return {"parts": [{"text": text}]}
+
+
 def chunk_text(text: str, size: int = 400) -> List[str]:
   return [text[i:i + size] for i in range(0, len(text), size) if text[i:i + size].strip()]
 
 
 def embed_chunks(chunks: List[str]) -> np.ndarray:
-  api_key = os.environ.get('GEMINI_API_KEY', '')
-  if not api_key:
-    raise RuntimeError('A backend API key is required for embeddings.')
-  genai.configure(api_key=api_key)
-  model = genai.EmbeddingModel(model_name='text-embedding-004')
-  vectors = model.embed_content([{ "title": f"Chunk {idx}", "content": chunk } for idx, chunk in enumerate(chunks)])
-  return np.array([item.values for item in vectors], dtype=np.float32)
+  client = _client()
+  response = client.models.embed_content(
+      model='text-embedding-004',
+      contents=[_text_content(chunk) for chunk in chunks],
+  )
+  embeddings = response.embeddings or []
+  if not embeddings:
+    raise RuntimeError('No embeddings were returned from the Gemini API.')
+  return np.array([item.values for item in embeddings], dtype=np.float32)
 
 
 def save_index(chunks: List[str], vectors: np.ndarray) -> None:
@@ -937,7 +963,7 @@ The following commands are intended for local execution.
 ```bash
 cd ai-web/backend
 . .venv/bin/activate
-pip install google-generativeai
+pip install google-genai
 ```
 """
         ),
@@ -1048,7 +1074,7 @@ A React component is outlined for TensorFlow.js usage.
         code(
             """
 from pathlib import Path
-app_js = Path("ai-web/frontend/src/App.js")
+app_js = Path("ai-web/frontend/src/App.jsx")
 app_js.write_text('''import React, { useEffect, useRef, useState } from 'react';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import '@tensorflow/tfjs';
@@ -1295,7 +1321,7 @@ The following commands are intended for local execution.
 ```bash
 cd ai-web/backend
 . .venv/bin/activate
-pip install google-generativeai
+pip install google-genai
 ```
 """
         ),
@@ -1587,9 +1613,9 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "3000:3000"
+      - "5173:5173"
     environment:
-      - REACT_APP_API_BASE=http://localhost:8000
+      - VITE_API_BASE=http://localhost:8000
 ''')
 print("Compose sketch was drafted.")
 """
