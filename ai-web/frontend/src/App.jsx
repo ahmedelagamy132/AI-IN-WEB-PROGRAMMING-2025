@@ -1,22 +1,23 @@
 import { useState } from 'react';
 import { post } from './lib/api';
 
+// Demo UI that lets students type a message and see the backend echo it back.
 function App() {
-  const [msg, setMsg] = useState('hello');
-  const [response, setResponse] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [msg, setMsg] = useState('hello'); // Track the text typed into the input.
+  const [response, setResponse] = useState(''); // Hold the echoed value to display.
+  const [loading, setLoading] = useState(false); // Flag while awaiting a network response.
+  const [error, setError] = useState(''); // Capture any error text to show the user.
 
   async function handleSend() {
-    setLoading(true);
-    setError('');
+    setLoading(true); // Indicate work is in progress and disable the button.
+    setError(''); // Clear prior errors before attempting a new request.
     try {
-      const json = await post('/echo', { msg });
-      setResponse(json.msg);
+      const json = await post('/echo', { msg }); // Call the FastAPI echo endpoint.
+      setResponse(json.msg); // Update UI with the message returned by the server.
     } catch (err) {
-      setError(String(err));
+      setError(String(err)); // Surface the failure so students can debug issues.
     } finally {
-      setLoading(false);
+      setLoading(false); // Always release the loading state.
     }
   }
 
