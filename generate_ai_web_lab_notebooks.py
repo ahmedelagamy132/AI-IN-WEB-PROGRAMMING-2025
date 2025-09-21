@@ -65,45 +65,50 @@ lab1_cells = [
     ),
     md(
         """## Prerequisites & install
-The following commands are intended for local execution.
+The container workflow depends on these locally installed tools:
 
 ```bash
-python --version
-node --version
-npm --version
+docker --version
+docker compose version
 git --version
+```
 
-# Backend environment preparation (local execution only)
-cd ai-web/backend
-python -m venv .venv
-# Windows: .venv\\Scripts\\activate
-# Unix/macOS:
-. .venv/bin/activate
-pip install fastapi uvicorn[standard] pydantic python-dotenv google-genai faiss-cpu numpy
+After cloning the repository, build and start the services with Docker Compose:
 
-# Frontend creation (Vite React template)
-cd ../../
-npm create vite@latest frontend -- --template react
-cd frontend
-npm install
+```bash
+cd ai-web
+docker compose build
+docker compose up
+# Backend → http://localhost:8000
+# Frontend → http://localhost:5173
+
+# Shut the stack down when finished exploring:
+docker compose down
 ```
 """
     ),
     md(
         """## Step-by-step tasks
-Each step is executed locally so backend keys remain protected.
+Each step configures local source files that the Docker stack will mount so secrets remain outside the built images.
 
-### Step 1: Backend folder layout
-A backend folder is created and populated with required files.
+### Step 1: Backend folder layout and Dockerfile
+A backend folder is created with starter FastAPI files and a Dockerfile that installs dependencies inside the image.
 """
     ),
     code(
         """
 from pathlib import Path
 base = Path("ai-web/backend")
+base.mkdir(parents=True, exist_ok=True)
+
+# Ensure the application package exists so FastAPI can locate modules.
 (base / "app").mkdir(parents=True, exist_ok=True)
 (base / "app" / "__init__.py").write_text("\n")
+
+# Provide a sample environment file that documents required secrets.
 (base / ".env.example").write_text('# Environment variables (never commit real keys)\nGEMINI_API_KEY=\n')
+
+# List Python dependencies that will be installed within the backend container.
 (base / "requirements.txt").write_text('''fastapi
 uvicorn[standard]
 pydantic
@@ -112,6 +117,8 @@ google-genai
 faiss-cpu
 numpy
 ''')
+
+# Create the FastAPI entrypoint with health and echo routes.
 (base / "app" / "main.py").write_text('''from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -138,20 +145,42 @@ def health():
 def echo(payload: EchoIn):
     return {"msg": payload.msg}
 ''')
-print("Backend scaffold was written under ai-web/backend.")
+
+# Define a Dockerfile that installs dependencies and starts uvicorn.
+(base / "Dockerfile").write_text('''FROM python:3.11-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \\n    PYTHONUNBUFFERED=1
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app ./app
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+''')
+
+print("Backend scaffold and Dockerfile were written under ai-web/backend.")
 """
     ),
     md(
-        """### Step 2: Frontend placeholders
-Frontend placeholders are positioned so Vite React components (`src/App.jsx`, `src/main.jsx`) can be customized while the generated `vite.config.js` continues to manage dev server defaults.
+        """### Step 2: Frontend placeholders and Dockerfile
+Frontend placeholders are positioned so Vite React components (`src/App.jsx`, `src/main.jsx`) can be customized while the generated `vite.config.js` continues to manage dev server defaults. A lightweight Dockerfile installs Node.js dependencies for the Vite dev server.
 """
     ),
     code(
         """
 from pathlib import Path
-src = Path("ai-web/frontend/src")
+frontend = Path("ai-web/frontend")
+src = frontend / "src"
+frontend.mkdir(parents=True, exist_ok=True)
+src.mkdir(parents=True, exist_ok=True)
+
+# Create a lib directory for shared utilities between components.
 (src / "lib").mkdir(parents=True, exist_ok=True)
 
+# Bootstrap a simple API helper with descriptive error handling.
 (src / "lib" / "api.js").write_text('''const BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 export async function post(path, body) {
@@ -166,6 +195,8 @@ export async function post(path, body) {
   return res.json();
 }
 ''')
+
+# Author a basic demo interface that interacts with the echo endpoint.
 (src / "App.jsx").write_text('''import { useState } from 'react';
 import { post } from './lib/api';
 
@@ -202,6 +233,8 @@ function App() {
 
 export default App;
 ''')
+
+# Mount the App component using Vite's modern entry point.
 (src / "main.jsx").write_text('''import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
@@ -212,11 +245,116 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>,
 );
 ''')
-print("Frontend placeholders were written under ai-web/frontend/src.")
+
+# Ensure Vite configuration and HTML entrypoint exist for the dev server.
+(frontend / "vite.config.js").write_text('''import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: true,
+    port: 5173,
+  },
+});
+''')
+
+(frontend / "index.html").write_text('''<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lab 1 Echo Demo</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+''')
+
+# Provide a package.json that mirrors the Vite React starter dependencies.
+(frontend / "package.json").write_text('''{
+  "name": "frontend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.2.0"
+  }
+}
+''')
+
+# Provide a Dockerfile that installs dependencies and runs the Vite dev server.
+(frontend / "Dockerfile").write_text('''FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+CMD ["npm", "run", "dev", "--", "--host"]
+''')
+
+print("Frontend placeholders and Dockerfile were written under ai-web/frontend.")
 """
     ),
     md(
-        """### Step 3: Git initialization
+        """### Step 3: Docker Compose orchestration
+A top-level `docker-compose.yml` is created so the backend and frontend can be started together with a single command.
+"""
+    ),
+    code(
+        """
+from pathlib import Path
+compose = Path("ai-web/docker-compose.yml")
+compose.parent.mkdir(parents=True, exist_ok=True)
+
+# Define services that mount local source for rapid iteration while keeping dependencies inside the containers.
+compose.write_text('''version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/.env.example:/app/.env:ro
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE=http://localhost:8000
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/vite.config.js:/app/vite.config.js
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/package.json:/app/package.json
+''')
+
+print("Docker Compose file was written under ai-web/docker-compose.yml.")
+"""
+    ),
+    md(
+        """### Step 4: Git initialization
 Git is initialized locally so changes can be tracked.
 """
     ),
@@ -230,9 +368,10 @@ git commit -m "Lab 1 scaffold"
 ```
 """
     ),
+
     acceptance(
-        "curl http://localhost:8000/health\ncurl -X POST http://localhost:8000/echo -H 'Content-Type: application/json' -d '{\"msg\":\"hello\"}'",
-        "HTTP 200 responses include status \"ok\" and the echoed payload.",
+        "docker compose up -d\ncurl http://localhost:8000/health\ncurl -X POST http://localhost:8000/echo -H 'Content-Type: application/json' -d '{\"msg\":\"hello\"}'\ndocker compose down",
+        "HTTP 200 responses include status \"ok\" and the echoed payload while the stack runs in Docker.",
     ),
     homework([
         "A README entry is expanded to document backend and frontend start commands.",
