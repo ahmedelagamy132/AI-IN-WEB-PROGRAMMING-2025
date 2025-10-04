@@ -1,7 +1,7 @@
 # Node
 node_modules/
 npm-debug.log*
-
+old content/
 # Python
 __pycache__/
 *.py[cod]
