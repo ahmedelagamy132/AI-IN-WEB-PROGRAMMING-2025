@@ -9,8 +9,9 @@ their work locally.
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from fastapi import APIRouter, Depends
 
-app = FastAPI()
+app = FastAPI() # Entry point creation
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # Permit the local Vite dev server.
