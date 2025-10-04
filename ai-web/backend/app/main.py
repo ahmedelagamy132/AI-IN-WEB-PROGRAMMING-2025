@@ -6,12 +6,16 @@ Vite dev server can reach the API from a different origin while students test
 their work locally.
 """
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from fastapi import APIRouter, Depends
 
-app = FastAPI() # Entry point creation
+# Load environment variables from a local .env file when present so the
+# application picks up credentials configured for the labs.
+load_dotenv()
+
+app = FastAPI()  # Entry point creation
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],  # Permit the local Vite dev server.
