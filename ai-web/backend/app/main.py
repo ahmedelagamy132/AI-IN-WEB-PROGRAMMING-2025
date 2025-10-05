@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers.echo import router as echo_router
+from app.routers.gemini import router as gemini_router
 
 # Load environment variables from a local .env file when present so the
 # application picks up credentials configured for the labs.
@@ -19,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(echo_router)
+app.include_router(gemini_router)
 
 
 @app.get("/health")
