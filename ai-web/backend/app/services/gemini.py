@@ -2,7 +2,9 @@
 
 The teaching labs encourage a service layer that contains the business logic
 for each feature. Routers stay thin while services interact with third-party
-SDKs or databases. This module demonstrates that pattern for Gemini requests.
+SDKs or databases. This module demonstrates that pattern for Gemini requests
+and is annotated line-by-line so instructors can explain each operation in
+class.
 """
 
 from __future__ import annotations
@@ -11,7 +13,9 @@ import os
 from functools import lru_cache
 from typing import List
 
-try:  # Import the Gemini SDK lazily so unit tests can run without the package.
+# Import the Gemini SDK lazily so unit tests (or classrooms without credentials)
+# can still import the module and read through the teaching notes.
+try:
     import google.generativeai as genai
 except ImportError as exc:  # pragma: no cover - handled during runtime usage.
     genai = None  # type: ignore[assignment]
@@ -25,7 +29,11 @@ class GeminiServiceError(RuntimeError):
 
 
 def _require_api_key() -> str:
-    """Read the API key from the environment and raise a descriptive error."""
+    """Read the API key from the environment and raise a descriptive error.
+
+    The helper keeps API key access in one place so the error message remains
+    consistent every time an instructor demonstrates a misconfigured setup.
+    """
 
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
@@ -37,7 +45,11 @@ def _require_api_key() -> str:
 
 @lru_cache(maxsize=1)
 def _configure_client(api_key: str) -> bool:
-    """Configure the global Gemini client once per process."""
+    """Configure the global Gemini client once per process.
+
+    The return value is a simple boolean so callers can ignore the result and
+    focus on the fact that the client has been prepared for use.
+    """
 
     if genai is None:  # pragma: no cover - depends on optional dependency.
         raise GeminiServiceError(
@@ -49,7 +61,12 @@ def _configure_client(api_key: str) -> bool:
 
 
 def _parse_outline_lines(raw_outline: str) -> List[str]:
-    """Convert the model response into a clean list of outline bullet points."""
+    """Convert the model response into a clean list of outline bullet points.
+
+    This mirrors what instructors explain in the Lab 03 notebook: Gemini often
+    returns Markdown bullets or numbered steps that the UI should present as
+    plain text list items.
+    """
 
     lines: List[str] = []
     for line in raw_outline.splitlines():
@@ -64,14 +81,30 @@ def _parse_outline_lines(raw_outline: str) -> List[str]:
 
 
 def generate_lesson_outline(topic: str, model: str | None = None) -> dict[str, str | list[str]]:
-    """Generate a course outline for the requested topic using Gemini."""
+    """Generate a course outline for the requested topic using Gemini.
+
+    Args:
+        topic: Instructor-provided lesson topic from the frontend form.
+        model: Optional override so the labs can experiment with different
+            Gemini releases. Defaults to ``GEMINI_MODEL`` or ``gemini-2.5-flash``.
+
+    Returns:
+        Dictionary containing the normalized topic string and a list of outline
+        bullet points. The structure matches the response model defined in
+        ``app/routers/gemini.py``.
+
+    Raises:
+        ValueError: If the topic is empty after trimming whitespace.
+        GeminiServiceError: When credentials are missing, the SDK is not
+            installed, or the Gemini API reports an error.
+    """
 
     normalized_topic = topic.strip()
     if not normalized_topic:
         raise ValueError("Topic must not be empty.")
 
     api_key = _require_api_key()
-    _configure_client(api_key)
+    _configure_client(api_key)  # Cache-aware setup keeps repeated requests fast.
 
     selected_model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     try:
