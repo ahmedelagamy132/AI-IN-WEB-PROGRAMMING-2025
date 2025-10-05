@@ -41,7 +41,7 @@ def _configure_client(api_key: str) -> bool:
 
     if genai is None:  # pragma: no cover - depends on optional dependency.
         raise GeminiServiceError(
-            "google-generativeai is not installed. Run `pip install google-genai` to enable the feature."
+            "google-generativeai is not installed. Run `pip install google-generativeai` to enable the feature."
         ) from _IMPORT_ERROR
 
     genai.configure(api_key=api_key)
