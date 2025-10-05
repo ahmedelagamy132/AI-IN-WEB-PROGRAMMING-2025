@@ -73,7 +73,7 @@ def generate_lesson_outline(topic: str, model: str | None = None) -> dict[str, s
     api_key = _require_api_key()
     _configure_client(api_key)
 
-    selected_model = model or os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+    selected_model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     try:
         generative_model = genai.GenerativeModel(selected_model)
         prompt = (
