@@ -9,7 +9,7 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     volumes:
       - ./backend/app:/app/app
-      - ./backend/.env.example:/app/.env:ro
+      - ./backend/.env:/app/.env:ro
 
   frontend:
     build: ./frontend
