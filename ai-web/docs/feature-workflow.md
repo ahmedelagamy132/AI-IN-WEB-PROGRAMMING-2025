@@ -43,8 +43,11 @@ frontend stay in sync and mirror the structure students build in Lab 01–03.
 ## 4. Wire up environment variables
 
 1. Document new keys in [`backend/.env.example`](../backend/.env.example) and
-   [`frontend/.env.example`](../frontend/.env.example). The instructor can copy
-   these files to `.env` when preparing demos.
+   [`frontend/.env.example`](../frontend/.env.example). Copy the backend template
+   to [`backend/.env`](../backend/.env) and update the real values before
+   launching Docker; the compose stack bind-mounts that file directly into the
+   FastAPI container. Restart the backend service after editing `.env` so
+   `python-dotenv` reloads the secrets.
 2. When introducing AI-powered flows, store API keys on the backend and proxy
    requests through FastAPI. The Gemini example keeps secrets server-side while
    the frontend calls `/ai/lesson-outline` via [`lib/api.js`](../frontend/src/lib/api.js).

@@ -26,9 +26,11 @@ deployed API.
 
 `docker-compose.yml` builds and runs the frontend and backend containers side by
 side, publishing ports `5173` and `8000` to the host. The compose file mounts
-source code for hot reload, forwards `VITE_API_BASE` to the frontend, and points
-the backend at the `.env` file so secrets like `GEMINI_API_KEY` are loaded
-consistently.
+source code for hot reload, forwards `VITE_API_BASE` to the frontend, and bind
+mounts [`backend/.env`](ai-web/backend/.env) into the FastAPI container so
+secrets like `GEMINI_API_KEY` are loaded consistently. Copy
+[`backend/.env.example`](ai-web/backend/.env.example) when setting up a new
+environment and restart the backend container after editing `.env`.
 
 ## Instructor workflow
 
