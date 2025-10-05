@@ -86,7 +86,11 @@ def generate_lesson_outline(topic: str, model: str | None = None) -> dict[str, s
         outline_text = getattr(response, "text", "").strip()
     except Exception as exc:  # pragma: no cover - depends on remote API.
         raw_message = str(exc).strip()
-        detail = f": {raw_message}" if raw_message else ""
+        if raw_message:
+            detail = f": {raw_message}"
+        else:
+            fallback = exc.__class__.__name__
+            detail = f": {fallback}"
         raise GeminiServiceError(
             f"Failed to generate lesson outline{detail}."
         ) from exc
