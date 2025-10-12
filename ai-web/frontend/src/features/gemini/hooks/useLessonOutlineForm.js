@@ -1,6 +1,5 @@
 // Hook encapsulating the state management for the Gemini lesson outline form.
-// The labs emphasise isolating fetch logic inside hooks so components stay
-// presentational and easy to reuse in lectures.
+// Isolate fetch logic inside hooks so presentational components stay easy to reuse.
 import { useCallback, useState } from 'react';
 
 import { post } from '../../../lib/api';
@@ -13,9 +12,13 @@ const ENDPOINT = '/ai/lesson-outline';
  * @returns {object} Handlers and state consumed by the presentational component.
  */
 export function useLessonOutlineForm() {
+  // Topic text mirrors the value inside the text input.
   const [topic, setTopic] = useState('');
+  // Outline array renders an ordered list once Gemini responds.
   const [outline, setOutline] = useState([]);
+  // Loading flag lets the UI disable the form and show progress copy.
   const [loading, setLoading] = useState(false);
+  // Error message is displayed inline near the submit button.
   const [error, setError] = useState(null);
 
   const handleSubmit = useCallback(
@@ -32,6 +35,7 @@ export function useLessonOutlineForm() {
       setError(null);
 
       try {
+        // POST to the FastAPI proxy so the browser never touches the Gemini key directly.
         const response = await post(ENDPOINT, { topic: trimmedTopic });
         setOutline(Array.isArray(response.outline) ? response.outline : []);
       } catch (err) {
@@ -44,6 +48,7 @@ export function useLessonOutlineForm() {
               : 'Unknown error';
         setError(detailMessage);
       } finally {
+        // Always release the loading state so the UI can react to the outcome.
         setLoading(false);
       }
     },
