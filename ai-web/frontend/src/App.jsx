@@ -18,7 +18,7 @@ function App() {
       <header style={{ display: 'grid', gap: 8 }}>
         <h1>AI in Web Programming Demos</h1>
         <p>
-          Use these examples to show students how the FastAPI and React layers
+          FastAPI and React layers
           evolve together. Each section mirrors the workflow documented in the
           instructor guide.
         </p>
