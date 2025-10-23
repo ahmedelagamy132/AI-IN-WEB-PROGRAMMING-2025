@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, constr
 
 from app.services.gemini import GeminiServiceError, generate_lesson_outline
+from app.services.lesson_summary import LessonSummaryServiceError, generate_lesson_summary
 
 # Prefix the router with /ai so every Gemini-powered endpoint is grouped
 # together in the automatically generated FastAPI docs.
@@ -46,6 +47,25 @@ def lesson_outline(payload: LessonOutlineIn) -> LessonOutlineOut:
         # Log the full stack trace for instructors while returning a concise
         # error payload to the browser.
         logger.exception("Gemini lesson outline request failed")
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    return LessonOutlineOut(**result)
+
+
+@router.post("/lesson-summary", response_model=LessonOutlineOut)
+def lesson_summary(payload: LessonOutlineIn) -> LessonOutlineOut:
+    """Delegate the heavy lifting to the lesson summary service layer."""
+
+    try:
+        result = generate_lesson_summary(payload.topic)
+    except ValueError as exc:
+        # Map validation issues (such as an empty topic) to an HTTP 422 so the
+        # frontend can display a friendly inline error message.
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except LessonSummaryServiceError as exc:
+        # Log the full stack trace for instructors while returning a concise
+        # error payload to the browser.
+        logger.exception("Lesson summary request failed")
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
     return LessonOutlineOut(**result)
