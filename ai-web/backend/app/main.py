@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers.echo import router as echo_router
 from app.routers.gemini import router as gemini_router
+from app.routers.chatbot import router as chatbot_router
 
 # Load environment variables from a local .env file when present so the
 # application picks up credentials configured for the labs.
@@ -14,13 +15,17 @@ load_dotenv()
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://didactic-space-enigma-55gqr455w5j3vvvj-5173.app.github.dev"
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 app.include_router(echo_router)
 app.include_router(gemini_router)
+app.include_router(chatbot_router)
 
 
 @app.get("/health")
