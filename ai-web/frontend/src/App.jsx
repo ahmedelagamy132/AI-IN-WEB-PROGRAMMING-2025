@@ -1,39 +1,23 @@
-// Application shell responsible for wiring feature modules into the page.
+// Application shell with routing for different feature pages.
 //
-// Each lab encourages keeping this component small so students can focus on the
-// feature folders under `src/features`. New demos should follow the same
-// pattern: create a hook for stateful logic and pass it into a presentational
-// component.
-import { EchoForm } from './features/echo/components/EchoForm';
-import { useEchoForm } from './features/echo/hooks/useEchoForm';
-import { LessonOutlineForm } from './features/gemini/components/LessonOutlineForm';
-import { useLessonOutlineForm } from './features/gemini/hooks/useLessonOutlineForm';
+// Uses React Router to provide separate pages for each demo feature,
+// making navigation cleaner and allowing each feature to have dedicated space.
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HomePage } from './pages/HomePage';
+import { ChatbotPage } from './pages/ChatbotPage';
+import { EchoPage } from './pages/EchoPage';
+import { LessonOutlinePage } from './pages/LessonOutlinePage';
 
 function App() {
-  const echoForm = useEchoForm();
-  const lessonOutlineForm = useLessonOutlineForm();
-
   return (
-    <main style={{ padding: 24, display: 'grid', gap: 32 }}>
-      <header style={{ display: 'grid', gap: 8 }}>
-        <h1>AI in Web Programming Demos</h1>
-        <p>
-          FastAPI and React layers
-          evolve together. Each section mirrors the workflow documented in the
-          instructor guide.
-        </p>
-      </header>
-
-      <section style={{ display: 'grid', gap: 16 }}>
-        <h2>Retrying echo service</h2>
-        <EchoForm {...echoForm} />
-      </section>
-
-      <section style={{ display: 'grid', gap: 16 }}>
-        <h2>Gemini lesson outline builder</h2>
-        <LessonOutlineForm {...lessonOutlineForm} />
-      </section>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/chatbot" element={<ChatbotPage />} />
+        <Route path="/echo" element={<EchoPage />} />
+        <Route path="/lesson-outline" element={<LessonOutlinePage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
