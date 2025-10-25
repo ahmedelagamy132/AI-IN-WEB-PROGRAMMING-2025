@@ -14,9 +14,10 @@ const ENDPOINT = '/chat/message';
  * sending new messages to the backend. The conversation context allows the
  * LLM to provide coherent multi-turn responses.
  *
+ * @param {string} conversationId - Optional conversation ID for persistence
  * @returns {object} Handlers and state consumed by the presentational component.
  */
-export function useChatbot() {
+export function useChatbot(conversationId = null) {
   // Messages array stores the entire conversation history
   const [messages, setMessages] = useState([]);
   // Input value mirrors the text in the message input field
@@ -44,10 +45,17 @@ export function useChatbot() {
 
       try {
         // Send the message along with conversation history for context
-        const response = await post(ENDPOINT, {
+        const payload = {
           message: trimmedInput,
           history: messages
-        });
+        };
+        
+        // Include conversation_id if provided for database persistence
+        if (conversationId) {
+          payload.conversation_id = conversationId;
+        }
+        
+        const response = await post(ENDPOINT, payload);
 
         // Append the assistant's response to the conversation
         const assistantMessage = {
@@ -71,7 +79,7 @@ export function useChatbot() {
         setLoading(false);
       }
     },
-    [input, messages]
+    [input, messages, conversationId]
   );
 
   const clearConversation = useCallback(() => {

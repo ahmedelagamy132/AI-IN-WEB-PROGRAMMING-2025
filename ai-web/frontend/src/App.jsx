@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage';
 import { ChatbotPage } from './pages/ChatbotPage';
 import { EchoPage } from './pages/EchoPage';
 import { LessonOutlinePage } from './pages/LessonOutlinePage';
+import { ConversationsPage } from './pages/ConversationsPage';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/chatbot" element={<ChatbotPage />} />
         <Route path="/echo" element={<EchoPage />} />
         <Route path="/lesson-outline" element={<LessonOutlinePage />} />
+        <Route path="/conversations" element={<ConversationsPage />} />
       </Routes>
     </BrowserRouter>
   );

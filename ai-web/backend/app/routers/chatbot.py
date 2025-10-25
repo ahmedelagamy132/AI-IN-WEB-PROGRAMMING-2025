@@ -2,15 +2,20 @@
 
 Following the same teaching pattern as the Gemini router, this module provides
 thoroughly documented endpoints that demonstrate how to build a conversational
-interface. Instructors can use this as a reference for multi-turn chat flows.
+interface with optional database persistence. Instructors can use this as a
+reference for multi-turn chat flows with data persistence.
 """
 
 import logging
+from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, constr
+from sqlalchemy.orm import Session
 
 from app.services.chatbot import ChatbotServiceError, send_chat_message
+from app.database import get_db
+from app.models import Conversation, Message
 
 # Prefix the router with /chat so all chatbot endpoints are grouped together
 # in the automatically generated FastAPI docs.
@@ -32,6 +37,7 @@ class ChatRequest(BaseModel):
 
     message: constr(strip_whitespace=True, min_length=1)  # type: ignore[valid-type]
     history: list[ChatMessage] | None = None
+    conversation_id: Optional[str] = None  # Optional ID to persist the conversation
 
 
 class ChatResponse(BaseModel):
@@ -39,22 +45,28 @@ class ChatResponse(BaseModel):
 
     role: str
     content: str
+    conversation_id: Optional[str] = None  # Return the conversation ID if persisted
 
 
 @router.post("/message", response_model=ChatResponse)
-def chat_message(payload: ChatRequest) -> ChatResponse:
+def chat_message(
+    payload: ChatRequest,
+    db: Session = Depends(get_db)
+) -> ChatResponse:
     """Handle a chat message and return the assistant's response.
 
     This endpoint demonstrates how to maintain conversation context across
-    multiple API calls. The frontend sends the full message history with each
-    request, allowing the backend to remain stateless while the LLM maintains
-    context awareness.
+    multiple API calls with optional database persistence. The frontend can
+    choose to provide a conversation_id to save messages to the database,
+    enabling features like conversation history and resume.
 
     Args:
-        payload: Contains the user's message and optional conversation history.
+        payload: Contains the user's message, optional conversation history,
+                and optional conversation_id for persistence.
+        db: Database session injected by FastAPI.
 
     Returns:
-        The assistant's response message.
+        The assistant's response message with optional conversation_id.
 
     Raises:
         HTTPException: 422 for validation errors, 503 for service failures.
@@ -68,10 +80,47 @@ def chat_message(payload: ChatRequest) -> ChatResponse:
             else None
         )
         
+        # If conversation_id is provided, verify it exists
+        conversation = None
+        if payload.conversation_id:
+            conversation = db.query(Conversation).filter(
+                Conversation.id == payload.conversation_id
+            ).first()
+            
+            if not conversation:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Conversation {payload.conversation_id} not found"
+                )
+        
+        # Save user message to database if conversation exists
+        if conversation:
+            user_message = Message(
+                conversation_id=conversation.id,
+                role="user",
+                content=payload.message
+            )
+            db.add(user_message)
+            db.commit()
+            logger.info(f"Saved user message to conversation {conversation.id}")
+        
+        # Get AI response
         result = send_chat_message(
             message=payload.message,
             history=history_dicts
         )
+        
+        # Save assistant response to database if conversation exists
+        if conversation:
+            assistant_message = Message(
+                conversation_id=conversation.id,
+                role="assistant",
+                content=result["content"]
+            )
+            db.add(assistant_message)
+            db.commit()
+            logger.info(f"Saved assistant message to conversation {conversation.id}")
+        
     except ValueError as exc:
         # Map validation issues (such as an empty message) to an HTTP 422 so
         # the frontend can display a friendly inline error message.
@@ -82,4 +131,7 @@ def chat_message(payload: ChatRequest) -> ChatResponse:
         logger.exception("Chatbot message request failed")
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    return ChatResponse(**result)
+    return ChatResponse(
+        **result,
+        conversation_id=conversation.id if conversation else None
+    )

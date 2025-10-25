@@ -1,4 +1,20 @@
 services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: aiwebuser
+      POSTGRES_PASSWORD: aiwebpass
+      POSTGRES_DB: aiweb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiwebuser -d aiweb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: ./backend
     ports:
@@ -7,6 +23,11 @@ services:
       - ./backend/.env
     volumes:
       - ./backend/app:/app/app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://aiwebuser:aiwebpass@db:5432/aiweb
 
   frontend:
     build: ./frontend
@@ -19,3 +40,6 @@ services:
       - ./frontend/vite.config.js:/app/vite.config.js
       - ./frontend/index.html:/app/index.html
       - ./frontend/package.json:/app/package.json
+
+volumes:
+  postgres_data:

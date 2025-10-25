@@ -18,6 +18,14 @@ export function HomePage() {
         />
 
         <DemoCard
+          title="Conversation History"
+          description="View and manage your saved conversations. See all your past chats with the AI assistant stored in the database."
+          link="/conversations"
+          emoji="💬"
+          highlight
+        />
+
+        <DemoCard
           title="Lesson Outline Builder"
           description="Generate structured lesson outlines from a short topic. Useful for planning course content."
           link="/lesson-outline"
