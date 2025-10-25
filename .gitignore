@@ -1,0 +1,22 @@
+# Node
+node_modules/
+npm-debug.log*
+old content/
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+.env
+# .env.*
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
