@@ -15,14 +15,16 @@ export function ChatbotPage() {
       </nav>
 
       <header style={{ marginBottom: 32 }}>
-        <h1>AI Teaching Assistant Chatbot</h1>
-   
+        <h1>Teaching Assistant</h1>
+        <p style={{ color: '#555', maxWidth: 800 }}>
+          Ask course-related questions about the labs and web programming topics.
+          The assistant keeps track of the conversation to provide helpful answers.
+        </p>
       </header>
 
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         <ChatbotInterface {...chatbot} />
       </div>
-
 
     </div>
   );

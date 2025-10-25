@@ -15,12 +15,10 @@ load_dotenv()
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://didactic-space-enigma-55gqr455w5j3vvvj-5173.app.github.dev"
-    ],
+    allow_origins=["*"],  # Allow all origins for development
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=False,  # Must be False when using allow_origins=["*"]
 )
 
 app.include_router(echo_router)

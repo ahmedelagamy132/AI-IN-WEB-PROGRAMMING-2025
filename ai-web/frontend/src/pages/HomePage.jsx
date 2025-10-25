@@ -5,10 +5,10 @@ export function HomePage() {
   return (
     <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
       <header style={{ marginBottom: 48 }}>
-        <h1>AI in Web Programming Demos</h1>
+        <h1>Web Programming Demos</h1>
         <p style={{ fontSize: 18, color: '#666' }}>
           Explore full-stack features demonstrating FastAPI and React integration
-          with AI capabilities.
+          for classroom-ready demos and hands-on labs.
         </p>
       </header>
 
@@ -21,17 +21,17 @@ export function HomePage() {
         />
 
         <DemoCard
-          title="Gemini Lesson Outline"
-          description="Generate structured lesson outlines using Gemini AI. Demonstrates integration with Google's generative AI models."
+          title="Lesson Outline Builder"
+          description="Generate structured lesson outlines from a short topic. Useful for planning course content."
           link="/lesson-outline"
           emoji="📚"
         />
 
         <DemoCard
-          title="AI Teaching Assistant"
-          description="Interactive chatbot powered by Gemini that maintains conversation context. Ask questions about web programming topics."
+          title="Teaching Assistant"
+          description="Interactive assistant that maintains conversation context. Ask questions about web programming topics."
           link="/chatbot"
-          emoji="💬"
+          emoji="�"
           highlight
         />
       </div>

@@ -3,7 +3,7 @@
 ## 🌐 Application URLs
 
 ### Frontend (Main Application)
-- **URL**: https://didactic-space-enigma-55gqr455w5j3vvvj-5173.app.github.dev
+- **URL**: https://didactic-sthpace-enigma-55gqr455w5j3vvvj-5173.app.github.dev
 - This is where you interact with all features including the chatbot
 
 ### Backend API
@@ -87,14 +87,19 @@ docker-compose up -d
 
 ## 🛠️ Development Workflow
 
-### Important: Frontend-Backend Connection in Codespaces
+### Frontend-Backend Connection
 
-The frontend connects to the backend using the `VITE_API_BASE` environment variable set in `docker-compose.yml`. For Codespaces, this is set to the forwarded backend URL:
-```
-VITE_API_BASE=https://didactic-space-enigma-55gqr455w5j3vvvj-8000.app.github.dev
-```
+The frontend connects to the backend using `http://localhost:8000` within the browser. Both services run in Docker containers with ports exposed to the host, so the browser can access them via localhost.
 
-If you restart the Codespace or get a new one, you'll need to update this URL in `docker-compose.yml` to match your new forwarded backend URL.
+**Configuration:**
+- Frontend: Runs on port 5173, accessible at the Codespace URL
+- Backend: Runs on port 8000, accessible at `http://localhost:8000` from your browser
+- CORS: Backend allows all origins for development convenience
+
+This setup works because:
+1. Your browser accesses the frontend through the Codespace forwarded port
+2. The browser then makes API calls to `http://localhost:8000` 
+3. The Codespace port forwarding routes these requests to the backend container
 
 ### Make Backend Changes
 1. Edit files in `backend/app/`
